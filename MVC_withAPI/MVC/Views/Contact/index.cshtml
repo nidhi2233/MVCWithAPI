@@ -1,0 +1,274 @@
+@model repositories.Models.t_Contact
+
+@{
+    ViewBag.Title = "Session Contacts List";
+}
+
+
+<h2>Session Contacts List</h2>
+
+<button id="addContactButton" class="btn btn-primary mb-3" onclick='$("contactModal").removeAttr("data-id")'>✚</button>
+<button id="logoutBtn" class="btn btn-danger mb-3">Logout</button>
+
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Edit</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Group</th>
+            <th>Address</th>
+            <th>Mobile</th>
+            <th>Status</th>
+            <th>Image</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody id="contactsTableBody">
+        
+        <!-- Rows will be populated dynamically -->
+    </tbody>
+</table>
+
+<!-- Edit/Add Modal -->
+<div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="AddContact" id="contactForm" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="contactModalLabel">Add Contact</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="ContactName" class="form-label">Name</label>
+                        <input asp-for="ContactName" type="text" id="ContactName" name="ContactName"
+                            class="form-control" required>
+                        <span asp-validation-for="ContactName" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label for="Email" class="form-label">Email</label>
+                        <input asp-for="Email" type="email" id="Email" name="Email" class="form-control" required>
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label for="Group" class="form-label">Group</label>
+                        <div class="mt-1">
+                            <input asp-for="Group" class="group-checkbox" type="checkbox" id="relative" name="Group"
+                                value="Realtive">
+                            Realtive
+                            <input asp-for="Group" class="group-checkbox" type="checkbox" id="friend" name="Group"
+                                value="Friend">
+                            Friend
+                            <input asp-for="Group" class="group-checkbox" type="checkbox" id="social" name="Group"
+                                value="Social">
+                            Social
+                            <input asp-for="Group" class="group-checkbox" type="checkbox" id="professnal" name="Group"
+                                value="Professional">
+                            Professional
+                            <span asp-validation-for="Group" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="Address" class="form-label">Address</label>
+                        <input asp-for="Address" type="text" id="Address" name="Address" class="form-control">
+                        <span asp-validation-for="Address" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label for="Mobile" class="form-label">Mobile</label>
+                        <input asp-for="Mobile" type="text" id="Mobile" name="Mobile" class="form-control">
+                        <span asp-validation-for="Mobile" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label for="Status" class="form-label">Status</label>
+                        <div class="mt-1">
+                            <select asp-for="Status" id="status" name="Status" class="form-control">
+                                <option value="Favourite">Favourite</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                            <span asp-validation-for="Status" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="formfile" class="form-label">Image</label>
+                        <input name="Image" id="Image" hidden>
+                        <input type="file" id="formfile" name="formfile" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial"></partial>
+    <script>
+        const url = "http://localhost:5119/api/ContactSesApi";
+        const token = localStorage.getItem('token');
+        $(document).ready(function () {
+            loadContacts();
+
+            function loadContacts() {
+                var user = JSON.parse(sessionStorage.getItem("user"));
+                $.ajax({
+                    url: 'http://localhost:5119/api/ContactSesApi',
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer' + token
+                    },
+                    success: function (data) {
+                        const tableBody = $('#contactsTableBody');
+                        tableBody.empty();
+                        data.forEach(contact => {
+                            tableBody.append(`
+                                                <tr>
+                                                    <td><button id="editContactButton" class="btn btn-info edit" data-id="${contact.contactId}">&hellip;✍</button></td>
+                                                    <td>${contact.contactName}</td>
+                                                    <td>${contact.email}</td>
+                                                    <td>${contact.group}</td>
+                                                    <td>${contact.address}</td>
+                                                    <td>${contact.mobile}</td>
+                                                    <td>${contact.status}</td>
+                                                    <td><img src="../../contact_images/${contact.image}" alt="Image" width="50" height="50"></td>
+                                                    <td><button class="btn btn-danger delete" data-id="${contact.contactId}">✘</button></td>
+                                                </tr>
+                                            `);
+                        });
+                    }
+                });
+            }
+
+            $('#addContactButton').click(function () {
+                $('#contactForm')[0].reset();
+                $('#contactid').val('0');
+                $('#contactModal').removeAttr('data-id');
+                $('#img').html('');
+                $('#contactModalLabel').text('Add Contact');
+                $('#contactModal').modal('show');
+            });
+
+            // Edit Contact Button
+            $(document).on('click', '.edit', function () {
+                const contactId = $(this).data('id');
+
+                // Fetch the contact details and populate the form
+                $.ajax({
+                    url: `http://localhost:5119/api/ContactSesApi/${contactId}`,
+                    method: 'GET',
+                    success: function (response) {
+                        $('#contactModal').attr("data-id", contactId);
+                        $('#ContactName').val(response.contactName);
+                        $('#Email').val(response.email);
+                        $('#Address').val(response.address);
+                        $('#Mobile').val(response.mobile);
+                        $('#status').val(response.status);
+                        $("#Image").val(response.image);
+
+                        // Handle groups (checkboxes)
+                        const groups = response.group ? response.group.split(',') : [];
+                        $('.group-checkbox').prop('checked', false); // Uncheck all
+                        groups.forEach(group => {
+                            $(`.group-checkbox[value="${group}"]`).prop('checked', true);
+                        });
+
+                        // Display image if available
+                        if (response.image) {
+                            $('#img').html(`<img src="../../contact_images/${response.image}" alt="Contact Image" class="img-thumbnail" style="width: 100px; height: 100px;">`);
+                        } else {
+                            $('#img').html('');
+                        }
+
+                        $('#contactModalLabel').text('Edit Contact'); // Set modal title to 'Edit Contact'
+                        $('#contactModal').modal('show'); // Open the modal
+                    },
+                    error: function (err) {
+                        console.log('Error fetching contact details:', err);
+                        alert('Failed to load contact details.');
+                    }
+                });
+            });
+
+            // Submit the Add/Edit Form
+            $('#contactForm').submit(function (e) {
+                e.preventDefault();
+
+                if (!$('#ContactName').val() || !$('#Email').val()) {
+                    alert('Please fill in all required fields!');
+                    return;
+                }
+
+                const formData = new FormData(this); // Create FormData from the form
+                const contactId = $('#contactModal').attr("data-id"); // Get the contact ID to check if it's an edit
+
+                const url = contactId
+                    ? `http://localhost:5119/api/ContactSesApi/${contactId}` // Edit contact API endpoint
+                    : 'http://localhost:5119/api/ContactSesApi'; // Add contact API endpoint
+
+                console.log(contactId);
+                const method = contactId ? 'PUT' : 'POST';
+
+                if (method == "PUT") {
+                    formData.append("ContactId", contactId);
+                }
+
+                const GroupValues = [];
+                $("input[name='Group']:checked").each(function () {
+                    GroupValues.push($(this).val())
+                });
+                formData.set("Group", GroupValues);
+
+                // Log form data for debugging
+                console.log([...formData.entries()]);
+
+                $.ajax({
+                    url: url,
+                    method: method,
+                    data: formData,
+                    headers: {
+                        'Authorization': 'Bearer' + token
+                    },
+                    processData: false,
+                    contentType: false,
+                    success: function () {
+                        alert(contactId ? 'Contact updated successfully!' : 'Contact added successfully!');
+                        $('#contactModal').modal('hide'); // Close the modal
+                        loadContacts(); // Refresh the contact list
+                    },
+                    error: function (err) {
+                        console.log('Error saving contact:', err);
+                        alert('Failed to save contact.');
+                    }
+                });
+            });
+
+            // Delete contact
+            $(document).on('click', '.delete', function () {
+                const id = $(this).data('id');
+                if (confirm('Are you sure you want to delete this contact?')) {
+                    $.ajax({
+                        url: `http://localhost:5119/api/ContactSesApi/${id}`,
+                        method: 'DELETE',
+                        success: function () {
+                            alert('Contact deleted successfully!');
+                            loadContacts();
+                        }
+                    });
+                }
+            });
+        });
+         document.getElementById("logoutBtn").addEventListener("click", function () {
+        // Clear local storage
+        localStorage.removeItem("user");
+        localStorage.removeItem("userToken");
+
+        // Redirect to login page
+        window.location.href = "/User/Login";
+    });
+    </script>
+}

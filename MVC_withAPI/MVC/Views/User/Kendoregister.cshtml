@@ -1,0 +1,300 @@
+@* @model Repositories.t_User;
+
+@{
+    ViewData["Title"] = "Login And RegisterPage";
+}
+<style>
+    .k-form-buttons {
+        margin-bottom: 10px;
+    }
+
+    #registra {
+        background: none !important;
+        border: none;
+        padding: 0 !important;
+        /optional/
+        font-family: arial, sans-serif;
+        /input has OS specific font-family/
+        color: #069;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    #Windowcontainer {
+        height: 400px;
+        width: 600px;
+        position: relative;
+        border: 1px solid rgba(20, 53, 80, 0.14);
+    }
+</style>
+
+<div class="mb-3 mt-3">
+    <div id="message"></div>
+</div>
+<div class="container mb-3 border border-3 w-50">
+    <div class="mb-3 ">
+        <h2 class="text-center">LOGIN</h2>
+    </div>
+    <div class="mb-3 ">
+        <form id="loginform" method="post"></form>
+    </div>
+    <div class="mb-3">
+        <button type="button" id="registra">Register New
+            User</button>
+    </div>
+
+    <div id="window">
+        <form id="registraForm" method="post" enctype="multipart/form-data"></form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial"></partial>
+    <script>
+        $(document).ready(function (e) {
+            $(".k-clear").attr("disabled", true);
+            var myWindow = $("#window"),
+                undo = $("#registra");
+
+            undo.click(function () {
+                myWindow.data("kendoWindow").open();
+                undo.fadeOut();
+            });
+
+            function onClose() {
+                undo.fadeIn();
+            }
+            myWindow.kendoWindow({
+                width: "800px",
+                title: "Registration Form",
+                visible: false,
+                actions: [
+                    "Close"
+                ],
+                close: onClose
+            }).data("kendoWindow").center().close();
+
+            $("#loginform").kendoForm({
+                validatable: {
+                    validateOnBlur: true,
+                    errorTemplate: "<span class='k-form-error'>#:message#</span>"
+                },
+                orientation: "vertical",
+                items: [{
+                    type: "group",
+                    items: [
+                        {
+                            field: "email",
+                            label: "Email Address",
+                            validation: { required: { message: "Email is requierd" }, email: { message: "Invalid Email Formate" } }
+                        },
+                        {
+                            field: "password",
+                            label: "Password",
+                            editor: function (container, options) {
+                                $('<input type="password" id="password" name="' + options.field + '" required="required" />')
+                                    .appendTo(container)
+                                    .kendoTextBox();
+                            },
+                            validation: { required: { message: "Password is requierd" } }
+                        },
+                    ]
+                }],
+                submit: function (e) {
+                    if ($("#loginform").data("kendoForm").validate()) {
+                        e.preventDefault();
+                        const formData = new FormData();
+                        formData.append("email", $("#loginform [name='email']").val());
+                        formData.append("password", $("#loginform [name='password']").val());
+                        $.ajax({
+                            type: "POST",
+                            method: "POST",
+                            url: 'http://localhost:5067/api/User/Login',
+                            data: formData,
+                            contentType: false,
+                            processData: false,
+                            success: function (res) {
+                                if (res.success) {
+                                    var user = JSON.stringify(res.alldata);
+                                    localStorage.setItem("user", user);
+                                    localStorage.setItem("userToken", res.token)
+                                    alert(res.message);
+                                    $("#message").removeClass("alert alert-danger").addClass("alert alert-success").text(res.message).show();
+                                    setTimeout(function () {
+                                        $("#message").hide();
+                                        window.location.href = "@Url.Action("Index", "Contact")"
+                                    }, 2000)
+                                }
+                                else {
+                                    alert(res.message);
+                                    $("#message").removeClass("alert alert-success").addClass("alert alert-danger").text(res.message).show();
+                                    setTimeout(function () {
+                                        $("#message").hide();
+                                    }, 3000)
+                                }
+                            },
+                            error: function (res) {
+                                $("#message").removeClass("alert alert-success").addClass("alert alert-danger").text(res);
+                                setTimeout(function () {
+                                    $("#message").hide();
+                                }, 3000)
+                            }
+
+                        });
+                    }
+                },
+                clear: function (ev) {
+                }
+            });
+        });
+
+        $("#registraForm").kendoForm({
+            validatable: {
+                validateOnBlur: true,
+                errorTemplate: "<span class='k-form-error'>#:message#</span>"
+            },
+            orientation: "vertical",
+            layout: "grid",
+            grid: {
+                cols: 2,
+                gutter: 20
+            },
+            items: [{
+                type: "group",
+                layout: "grid",
+                grid: { cols: 1, gutter: 10 },
+                items: [
+                    {
+                        field: "userName",
+                        label: "User Name",
+                        validation: { required: { message: "User Name is requierd" } }
+                    },
+                    {
+                        field: "address",
+                        label: "Address",
+                    },
+
+                    {
+                        field: "gender",
+                        editor: "RadioGroup",
+                        label: "Gender:",
+                        editorOptions: {
+                            items: ["Male", "Female"],
+                            layout: "horizontal",
+                            labelPosition: "before"
+                        },
+                        validation: { required: { message: "Gender is requierd" } }
+                    },
+                    {
+                        field: "password",
+                        label: "paaaword",
+                        editor: function (container, options) {
+                            $('<input type="password" id="password" name="' + options.field + '" required="required"/>')
+                                .appendTo(container)
+                                .kendoTextBox();
+                        },
+                        validation: { required: { message: "Password is requierd" } }
+                    },
+                ]
+            },
+            {
+                type: "group",
+                layout: "grid",
+                grid: { cols: 1, gutter: 10 },
+                items: [
+                    {
+                        field: "email",
+                        label: "Email Address",
+                        validation: { required: { message: "Email is requierd" }, email: { message: "Invalid Email Formate" } }
+                    },
+                    {
+                        field: "mobile",
+                        label: "Mobile",
+                        validation: {
+                            required: { message: "Mobile number is required" },
+                            pattern: {
+                                value: "^[0-9]{10}$",
+                                message: "Invalid mobile number"
+                            }
+                        }
+                    },
+                    {
+                        field: "imageFile",
+                        label: "Image",
+                        editor: function (container, options) {
+                            $('<input type="file" id="imageFile" name="' + options.field + '" class="form-control" required="required"/>')
+                                .appendTo(container)
+                                .kendoTextBox();
+                        },
+                        validation: { required: { message: "Image is required" } },
+                    },
+                    {
+                        field: "confirmPassword",
+                        label: "Confirm Password",
+                        editor: function (container, options) {
+                            $('<input type="password" id="confirmPassword" name="' + options.field + '" required="required"/>')
+                                .appendTo(container)
+                                .kendoTextBox();
+                        },
+                        validation: {
+                            required: { message: "Confirm Password is requierd" }
+                        }
+                    },
+                ]
+            }],
+
+            validateField: function (e) {
+                errorTemplate: "<span class='k-form-error'></span>"
+            },
+            submit: function (e) {
+                if ($("#registraForm").data("kendoForm").validate()) {
+                    e.preventDefault();
+                    const formData = new FormData();
+                    formData.append("userName", $("#registraForm [name='userName']").val());
+                    formData.append("email", $("#registraForm [name='email']").val());
+                    formData.append("address", $("#registraForm [name='address']").val());
+                    var gender = $("input[name='gender']:checked").val();
+                    formData.append("gender", gender);
+                    formData.append("mobile", $("#registraForm [name='mobile']").val());
+                    var fileInput = $("#registraForm [name='imageFile']")[0];
+                    var file = fileInput.files[0];
+                    formData.append("imageFile", file);
+                    formData.append("password", $("#registraForm [name='password']").val());
+                    formData.append("confirmPassword", $("#registraForm [name='confirmPassword']").val());
+                    $.ajax({
+                        type: "POST",
+                        method: "POST",
+                        url: 'http://localhost:5067/api/User/Register',
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                        success: function (res) {
+                            if (res.success) {
+                                $("#message").removeClass("alert alert-danger").addClass("alert alert-success").text(res.message).show();
+                                setTimeout(function () {
+                                    $("#message").hide();
+                                }, 2000)
+                            }
+                            else {
+                                $("#rMessage").removeClass("alert alert-success").addClass("alert alert-danger").text(res.message).show();
+                                setTimeout(function () {
+                                    $("#rMessage").hide();
+                                }, 3000)
+                            }
+                        },
+                        error: function (res) {
+                            $("#rMessage").removeClass("alert alert-success").addClass("alert alert-danger").text(res.message);
+                            setTimeout(function () {
+                                $("#rMessage").hide();
+                            }, 3000)
+                        }
+
+                    });
+                }
+            },
+            clear: function (e) {
+
+            }
+        });
+    </script>
+} *@

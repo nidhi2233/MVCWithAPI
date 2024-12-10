@@ -1,0 +1,313 @@
+@model Repositories.Models.Project
+
+@{
+    ViewBag.Title = "Project List";
+}
+
+
+<h2 class="text-center">Project List</h2>
+
+<button id="addButton" class="btn btn-primary mb-3" onclick='$("projectModel").removeAttr("data-id")'>✚</button>
+<button id="logoutBtn" class="btn btn-danger mb-3">Logout</button>
+
+
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>Project Name</th>
+            <th>Project Description</th>
+            <th>Edit</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody id="projectTableBody">
+
+    </tbody>
+</table>
+
+<!-- Edit/Add Modal -->
+<div class="modal fade" id="projectModel" tabindex="-1" aria-labelledby="projectModelLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="AddProject" id="projectForm" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="projectModelLabel">Add Project</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="ProjectName" class="form-label">Project Name</label>
+                        <input asp-for="ProjectName" type="text" id="ProjectName" name="ProjectName"
+                            class="form-control" required>
+                        <span asp-validation-for="ProjectName" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label for="Description" class="form-label">Description</label>
+                        <input asp-for="Description" type="text" id="Description" name="Description"
+                            class="form-control" required>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="mt-2 mb-3 ">
+    <h2 class="text-center">Particular Project Tasks</h2>
+</div>
+
+<table id="peojectTask" class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Employee Name</th>
+            <th>Estimated Day</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Status</th>
+            <th>Employee Details</th>
+        </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+</table>
+@* </div>
+</div> *@
+
+<div class="modal fade" id="employeeDetails" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Employee Detail</h5>
+                <button type="button" id="close" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <label><b>Name : </b></label>&#160;<label id="empName"></label><br />
+                <label><b>E-mail : </b></label>&#160;<label id="email"></label>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial"></partial>
+    <script>
+        @* const url = "http://localhost:5201/api/"; *@
+                                                            const token = localStorage.getItem('token');
+        $(document).ready(function () {
+            loadProject();
+
+            function loadProject() {
+                var user = JSON.parse(sessionStorage.getItem("user"));
+                $.ajax({
+                    url: 'http://localhost:5201/api/Project',
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer' + token
+                    },
+                    success: function (res) {
+                        console.log(res);
+                        const tableBody = $('#projectTableBody');
+                        tableBody.empty();
+                        res.data.forEach(project => {
+                            tableBody.append(`
+                                                    <tr>
+                                                    <td>${project.projectName}</td>
+                                                    <td>${project.description}</td>
+                                                    <td><button id="editContactButton" class="btn btn-info edit" data-id="${project.projectId}">&hellip;✍</button></td>
+                                                    <td><button class="btn btn-danger delete" id="deleteproject" onclick="deleteProject(${project.projectId})">✘</button></td>
+                                                                                            <td> <button class="btn btn-outline-primary" id="details" onclick="LoadTask(${project.projectId})">Detail</button></td>
+                                                </tr>
+                                            `);
+                        });
+                    }
+                });
+            }
+
+
+
+            $('#addButton').click(function () {
+                $('#projectForm')[0].reset();
+                $('#ProjectId').val('0');
+                $('#projectModel').removeAttr('data-id');
+
+                $('#projectModelLabel').text('Add Project');
+                $('#projectModel').modal('show');
+            });
+
+            // Edit Project Button
+            $(document).on('click', '.edit', function () {
+                const projectId = $(this).data('id');
+
+                // Fetch the Project details and populate the form
+                $.ajax({
+                    url: `http://localhost:5201/api/Project/${projectId}`,
+                    method: 'GET',
+                    success: function (response) {
+                        console.log(response);
+                        $('#projectModel').attr("data-id", projectId);
+                        $('#ProjectName').val(response.data.projectName);
+                        $('#Description').val(response.data.description);
+                        $('#projectModelLabel').text('Edit Project'); // Set modal title to 'Edit Project'
+                        $('#projectModel').modal('show'); // Open the modal
+                    },
+                    error: function (err) {
+                        console.log('Error fetching project details:', err);
+                        alert('Failed to load project details.');
+                    }
+                });
+            });
+
+            // Submit the Add/Edit Form
+            $('#projectForm').submit(function (e) {
+                e.preventDefault();
+
+                if (!$('#ProjectName').val() || !$('#Description').val()) {
+                    alert('Please fill in all required fields!');
+                    return;
+                }
+
+                const formData = new FormData(this); // Create FormData from the form
+                const projectId = $('#projectModel').attr("data-id"); // Get the Project ID to check if it's an edit
+
+                const url = projectId
+                    ? `http://localhost:5201/api/Project/${projectId}` // Edit Project API endpoint
+                    : 'http://localhost:5201/api/Project'; // Add Project API endpoint
+
+                console.log(projectId);
+                const method = projectId ? 'PUT' : 'POST';
+
+                if (method == "PUT") {
+                    formData.append("projectId", projectId);
+                }
+
+
+                // Log form data for debugging
+                console.log([...formData.entries()]);
+
+                $.ajax({
+                    url: url,
+                    method: method,
+                    data: formData,
+                    headers: {
+                        'Authorization': 'Bearer' + token
+                    },
+                    processData: false,
+                    contentType: false,
+                    success: function () {
+                        alert(projectId ? 'Project updated successfully!' : 'Project added successfully!');
+                        $('#projectModel').modal('hide'); // Close the modal
+                        loadProject(); // Refresh the Project list
+                    },
+                    error: function (err) {
+                        console.log('Error saving Project:', err);
+                        alert('Failed to save Project.');
+                    }
+                });
+            });
+
+
+            document.getElementById("logoutBtn").addEventListener("click", function () {
+                // Clear local storage
+                localStorage.removeItem("user");
+                localStorage.removeItem("userToken");
+
+                // Redirect to login page
+                window.location.href = "/Home/Login";
+            });
+        });
+        // Delete Project
+        function deleteProject(id) {
+            if (confirm('Are you sure you want to delete this project?')) {
+                $.ajax({
+                    url: `http://localhost:5201/api/Project/${id}`,
+                    method: 'DELETE',
+                    success: function (res) {
+                        console.log(res);
+                        alert('Project deleted successfully!');
+                        loadProject();
+                    }
+                });
+            }
+        }
+
+        async function LoadTask(id) {
+            $("#task").show();
+            var url = "http://localhost:5201/api/Task/GetAllTaskByProjectId/" + id;
+            $.ajax({
+                url: url,
+                method: "GET",
+                headers: {
+                    'Authorization': 'Bearer' + token
+                },
+                success: function (res) {
+                    if (res.success) {
+                        console.log(res.data)
+                        var tableBody = $("#tbody");
+                        tableBody.empty();
+                        res.data.forEach(function (task) {
+                            const row = `<tr>
+                                            <td>${task.title}</td>
+                                            <td>${task.description}</td>
+                                            <td>${task.employee.empName}</td>
+                                            <td>${task.estimatedDays}</td>
+                                            <td>${task.startDate}</td>v
+                                            <td>${task.endDate}</td>
+                                            <td>${task.status}</td>
+                                            <td>
+                                                <button class="btn btn-outline-primary" id="details" class="btn btn-outline-success" data-bs-toggle="modal"data-bs-target="#employeeDetails" onclick="empDetails(${task.empId})">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-card-list" viewBox="0 0 16 16">
+                                                    <path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2z"/>
+                                                    <path d="M5 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 5 8m0-2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5m0 5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5m-1-5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0M4 8a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m0 2.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0"/>
+                                                    </svg>&#160;Details
+                                                </button>
+                                            </td>
+                                            </tr>`;
+                            tableBody.append(row);
+                        });
+                    }
+                }
+            });
+        }
+
+        async function empDetails(id) {
+            var url = `http://localhost:5201/api/Employee/GetEmployeeById/${id}`;
+        @* var res = await callAjax("GET", url, null, false, token) *@
+                $.ajax({
+                    url: url,
+                    method: 'GET',
+                    success: function (response) {
+                        console.log(response);
+                        $("#empName").text(response.data.empName);
+                        $("#email").text(response.data.email);
+
+                    },
+                    error: function (err) {
+                        console.log('Error fetching employee details:', err);
+                        alert('Failed to load project details.');
+                    }
+                });
+    
+        @* if (res.success) {
+                console.log(res.data);
+                $("#empName").text(res.data.empName);
+                $("#email").text(res.data.email);
+            }
+            else {
+                console.log(res.message)
+            } *@
+            }
+
+    </script>
+}

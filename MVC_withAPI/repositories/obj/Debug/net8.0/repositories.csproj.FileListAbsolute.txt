@@ -1,0 +1,12 @@
+D:\CasePoint\MVC_withAPI\repositories\bin\Debug\net8.0\repositories.deps.json
+D:\CasePoint\MVC_withAPI\repositories\bin\Debug\net8.0\repositories.dll
+D:\CasePoint\MVC_withAPI\repositories\bin\Debug\net8.0\repositories.pdb
+D:\CasePoint\MVC_withAPI\repositories\obj\Debug\net8.0\repositories.csproj.AssemblyReference.cache
+D:\CasePoint\MVC_withAPI\repositories\obj\Debug\net8.0\repositories.GeneratedMSBuildEditorConfig.editorconfig
+D:\CasePoint\MVC_withAPI\repositories\obj\Debug\net8.0\repositories.AssemblyInfoInputs.cache
+D:\CasePoint\MVC_withAPI\repositories\obj\Debug\net8.0\repositories.AssemblyInfo.cs
+D:\CasePoint\MVC_withAPI\repositories\obj\Debug\net8.0\repositories.csproj.CoreCompileInputs.cache
+D:\CasePoint\MVC_withAPI\repositories\obj\Debug\net8.0\repositories.dll
+D:\CasePoint\MVC_withAPI\repositories\obj\Debug\net8.0\refint\repositories.dll
+D:\CasePoint\MVC_withAPI\repositories\obj\Debug\net8.0\repositories.pdb
+D:\CasePoint\MVC_withAPI\repositories\obj\Debug\net8.0\ref\repositories.dll

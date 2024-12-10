@@ -1,0 +1,73 @@
+@model Repositories.Models.Login
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="container mt-5">
+    <h2>Login</h2>
+    <div id="loginResponse" class="mt-3"></div>
+
+    <form asp-action="Login" id="loginForm" method="post">
+        <div class="form-group mb-4">
+            <label for="loginEmail">Email</label>
+            <input asp-for="Email" type="email" id="loginEmail" name="Email" class="form-control" placeholder="Enter your email" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <div class="form-group mb-4">
+            <label for="loginPassword">Password</label>
+            <input asp-for="Password" type="password" id="loginPassword" name="Password" class="form-control" placeholder="Enter your password"  />
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+         <div>
+        <button type="button" id="loginBtn" class="btn btn-primary">Login</button>
+        <button type="button" id="RegisterBtn" class="btn btn-primary">Register</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial"></partial>
+    <script>
+        $(document).ready(function () {
+            $('#loginBtn').click(function (event) {
+                event.preventDefault();
+                if($('#loginForm').valid()){
+                var formData = new FormData();
+                formData.append("Email", $('#loginEmail').val());
+                formData.append("Password", $('#loginPassword').val());
+
+                $.ajax({
+                    url: 'http://localhost:5201/api/Employee/Login', 
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        console.log(response);
+                        if (response.success) {
+                            var user = JSON.stringify(response.alldata);
+                            localStorage.setItem("user",user);
+                            localStorage.setItem("userToken",response.token);
+                            $('#loginResponse').removeClass("alert-danger").addClass("alert alert-success");
+                            $('#loginResponse').text('Login successful');
+                            window.location.href = response.redirectUrl; 
+                        } else {
+                            $('#loginResponse').removeClass("alert-success").addClass("alert alert-danger");
+                            $('#loginResponse').text('' + response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        $('#loginResponse').removeClass("alert-success").addClass("alert alert-danger");
+                        $('#loginResponse').text('Email or Password is not Correct.');
+                    }
+                });
+                }  
+            });
+            $('#RegisterBtn').click(function () {
+                window.location.href = '/Home/Register'; 
+            });
+        });
+    </script>
+}
+

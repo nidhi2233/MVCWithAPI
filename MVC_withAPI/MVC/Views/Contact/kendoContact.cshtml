@@ -1,0 +1,136 @@
+@model repositories.Models.t_Contact
+
+@{
+    ViewBag.Title = "Session Contacts List";
+}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Contact Management</title>
+</head>
+
+<body>
+    <div id="contactsGrid"></div>
+    <!-- Include jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Include Kendo UI Styles -->
+    <link href="https://kendo.cdn.telerik.com/2024.3.806/styles/kendo.common.min.css" rel="stylesheet" />
+    <link href="https://kendo.cdn.telerik.com/2024.3.806/styles/kendo.default.min.css" rel="stylesheet" />
+    <link href="https://kendo.cdn.telerik.com/2024.3.806/styles/kendo.default-v2.min.css" rel="stylesheet" />
+
+    <!-- Include Kendo UI Script -->
+    <script src="https://kendo.cdn.telerik.com/2024.3.806/js/kendo.all.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $("#contactsGrid").kendoGrid({
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: "/api/ContactSesApi", // Fetch all contacts
+                            dataType: "json"
+                        },
+                        create: {
+                            url: "/api/ContactSesApi", // Add new contact
+                            dataType: "json",
+                            type: "POST"
+                        },
+                        update: {
+                            url: function (data) {
+                                return `/api/ContactSesApi/${data.ContactId}`; // Update contact by ID
+                            },
+                            dataType: "json",
+                            type: "PUT"
+                        },
+                        destroy: {
+                            url: function (data) {
+                                return `/api/ContactSesApi/${data.ContactId}`; // Delete contact by ID
+                            },
+                            dataType: "json",
+                            type: "DELETE"
+                        },
+                        parameterMap: function (data, type) {
+                            if (type === "create" || type === "update") {
+                                // Format the data before sending it to the API
+                                return { ...data };
+                            }
+                            return data;
+                        }
+                    },
+                    schema: {
+                        model: {
+                            id: "ContactId",
+                            fields: {
+                                ContactId: { type: "number", editable: false },
+                                UserId: { type: "number", validation: { required: true } },
+                                ContactName: { type: "string", validation: { required: true } },
+                                Email: { type: "string", validation: { required: true, email: true } },
+                                Mobile: { type: "string", validation: { required: true } },
+                                Address: { type: "string" },
+                                Status: { type: "string" },
+                                Group: { type: "string" },
+                                Image: { type: "string" }
+                            }
+                        }
+                    },
+                    pageSize: 10
+                },
+                pageable: true,
+                sortable: true,
+                toolbar: ["create"],
+                columns: [
+                    { field: "ContactId", title: "ID", width: "50px" },
+                    { field: "UserId", title: "User ID", width: "100px" },
+                    { field: "ContactName", title: "Name", width: "150px" },
+                    { field: "Email", title: "Email", width: "200px" },
+                    { field: "Mobile", title: "Mobile", width: "150px" },
+                    { field: "Address", title: "Address", width: "200px" },
+                    { field: "Group", title: "Group", width: "150px" },
+                    { field: "Status", title: "Status", width: "100px" },
+                    {
+                        field: "Image",
+                        title: "Image",
+                        template: "<img src='../MVC/wwwroot/contact_images/#= Image #' style='width:50px;height:50px;'/>",
+                        width: "100px"
+                    },
+                    { command: ["edit", "destroy"], title: "Actions", width: "200px" }
+                ],
+                editable: {
+                    mode: "popup", // Popup editing for better UI
+                    template: kendo.template($("#popup-editor-template").html())
+                }
+            });
+        });
+    </script>
+
+    <!-- Popup Editor Template -->
+    <script type="text/x-kendo-template" id="popup-editor-template">
+        <div class="k-edit-form-container">
+            <label for="ContactName">Name:</label>
+            <input type="text" name="ContactName" class="k-input k-textbox" data-bind="value:ContactName" />
+
+            <label for="Email">Email:</label>
+            <input type="email" name="Email" class="k-input k-textbox" data-bind="value:Email" />
+
+            <label for="Mobile">Mobile:</label>
+            <input type="text" name="Mobile" class="k-input k-textbox" data-bind="value:Mobile" />
+
+            <label for="Address">Address:</label>
+            <input type="text" name="Address" class="k-input k-textbox" data-bind="value:Address" />
+
+            <label for="Group">Group:</label>
+            <input type="text" name="Group" class="k-input k-textbox" data-bind="value:Group" />
+
+            <label for="Status">Status:</label>
+            <input type="text" name="Status" class="k-input k-textbox" data-bind="value:Status" />
+
+            <label for="Image">Image:</label>
+            <input type="file" name="Image" data-bind="value:Image" />
+        </div>
+    </script>
+</body>
+
+</html>

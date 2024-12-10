@@ -1,0 +1,45 @@
+<div class="dashboard-container">
+    <h1>Admin Dashboard</h1>
+
+    <div class="statistics">
+        <div class="stat-card">
+            <h3>Pending Tasks</h3>
+            <p>{{pendingTasksCount}}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Completed Tasks</h3>
+            <p>{{completedTasksCount}}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Estimation Accuracy</h3>
+            <div id="estimation-chart"></div> <!-- Kendo UI Chart -->
+        </div>
+    </div>
+
+    <div class="dashboard-buttons">
+        <a href="/Admin/ManageProjects" class="btn btn-primary">Manage Projects</a>
+        <a href="/Admin/ViewTasks" class="btn btn-primary">View Tasks</a>
+    </div>
+</div>
+
+<script>
+    // Kendo UI Chart (Example)
+    $("#estimation-chart").kendoChart({
+        dataSource: {
+            data: [
+                { category: "Task A", actual: 5, estimated: 7 },
+                { category: "Task B", actual: 3, estimated: 3 }
+            ]
+        },
+        series: [{
+            type: "column",
+            field: "actual",
+            name: "Actual Duration"
+        }, {
+            type: "column",
+            field: "estimated",
+            name: "Estimated Duration"
+        }],
+        categoryField: "category"
+    });
+</script>

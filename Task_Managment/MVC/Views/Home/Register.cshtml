@@ -1,0 +1,90 @@
+@model Repositories.Models.Employee
+@{
+    ViewData["Title"] = "Register";
+}
+
+<h2>Register</h2>
+
+<!-- Form starts here -->
+<form asp-action="Register" id="registerForm" enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="EmpName">Name</label>
+        <input asp-for="EmpName" type="text" class="form-control" id="EmpName" name="EmpName" placeholder="Enter your name" required />
+        <span asp-validation-for="EmpName" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label for="Email">Email</label>
+        <input asp-for="Email" type="email" class="form-control" id="Email" name="Email" placeholder="Enter your email" required />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label for="Password">Password</label>
+        <input asp-for="Password" type="password" class="form-control" id="Password" name="Password" placeholder="Enter your password" required />
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label for="ConfirmPassword">Confirm Password</label>
+        <input asp-for="ConfirmPassword" type="password" class="form-control" id="ConfirmPassword" name="ConfirmPassword" placeholder="Confirm your password" required />
+        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label for="formFile">Profile Image</label>
+        <input asp-for="formFile" type="file" class="form-control-file" id="formFile" name="formFile" accept="image/*" />
+        <span asp-validation-for="formFile" class="text-danger"></span>
+    </div>
+
+    <button type="button" id="register" class="btn btn-primary">Register</button>
+</form>
+
+<!-- Div for displaying response messages -->
+<div id="responseMessage" class="mt-3"></div>
+
+<!-- JavaScript for handling AJAX submission -->
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial"></partial>
+<script>
+    $(document).ready(function () {
+        $('#register').click(function (event) {
+            event.preventDefault();
+            if($('#registerForm').valid()){
+                $('#responseMessage').removeClass().text('');
+
+            var formData = new FormData($('#registerForm')[0]);
+
+            $.ajax({
+                url: 'http://localhost:5201/api/Employee/Add', // API endpoint
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    if (response.success) {
+                        $('#responseMessage').addClass("alert alert-success").text(response.message);
+                        $('#registerForm')[0].reset(); 
+                        window.location.href = "/Home/Login";
+                    } else {
+                        $('#responseMessage').addClass("alert alert-danger").text(response.message);
+                    }
+                },
+                error: function (xhr) {
+                    let errors = xhr.responseJSON.errors || {};
+                    let errorMessages = Object.values(errors).flat().join(", ");
+                    if (errorMessages) {
+                        $('#responseMessage').addClass("alert alert-danger").text("Validation Errors: " + errorMessages);
+                    } else {
+                        $('#responseMessage').addClass("alert alert-danger").text("An unexpected error occurred.");
+                    }
+                }
+            });
+            }
+
+            
+        });
+    });
+</script>
+}
